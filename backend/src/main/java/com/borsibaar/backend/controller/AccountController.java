@@ -4,7 +4,6 @@ import com.borsibaar.backend.entity.User;
 import com.borsibaar.backend.repository.UserRepository;
 import com.borsibaar.backend.service.JwtService;
 import io.jsonwebtoken.Claims;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;

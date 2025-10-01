@@ -20,8 +20,8 @@ public class ProductController {
     private final JwtService jwtService;
     private final UserRepository userRepository;
 
-    public ProductController(ProductService producService, JwtService jwtService, UserRepository userRepository) {
-        this.productService = producService;
+    public ProductController(ProductService productService, JwtService jwtService, UserRepository userRepository) {
+        this.productService = productService;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
     }
