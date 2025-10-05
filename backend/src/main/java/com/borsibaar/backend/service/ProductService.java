@@ -3,33 +3,33 @@ package com.borsibaar.backend.service;
 import com.borsibaar.backend.dto.ProductRequestDto;
 import com.borsibaar.backend.dto.ProductResponseDto;
 import com.borsibaar.backend.entity.Category;
+import com.borsibaar.backend.entity.Inventory;
+import com.borsibaar.backend.entity.InventoryTransaction;
 import com.borsibaar.backend.entity.Product;
 import com.borsibaar.backend.mapper.ProductMapper;
 import com.borsibaar.backend.repository.CategoryRepository;
+import com.borsibaar.backend.repository.InventoryRepository;
+import com.borsibaar.backend.repository.InventoryTransactionRepository;
 import com.borsibaar.backend.repository.ProductRepository;
 import com.borsibaar.backend.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Service
+@RequiredArgsConstructor
 public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final UserRepository userRepository;
-
-    public ProductService(ProductRepository productRepository,
-                          CategoryRepository categoryRepository,
-                          ProductMapper productMapper, UserRepository userRepository) {
-        this.productRepository = productRepository;
-        this.categoryRepository = categoryRepository;
-        this.productMapper = productMapper;
-        this.userRepository = userRepository;
-    }
+    private final InventoryRepository inventoryRepository;
+    private final InventoryTransactionRepository inventoryTransactionRepository;
 
     @Transactional
     public ProductResponseDto create(ProductRequestDto request, Long orgId) {
@@ -60,6 +60,9 @@ public class ProductService {
 
         Product saved = productRepository.save(entity);
 
+        // Automatically create inventory record with 0 quantity
+        createInitialInventory(saved.getId(), orgId);
+
         ProductResponseDto base = productMapper.toResponse(saved);
         return new ProductResponseDto(
                 base.id(),
@@ -69,6 +72,21 @@ public class ProductService {
                 base.categoryId(),
                 cat.getName()
         );
+    }
+
+    private void createInitialInventory(Long productId, Long organizationId) {
+        Inventory inventory = new Inventory(organizationId, productId, BigDecimal.ZERO);
+        Inventory savedInventory = inventoryRepository.save(inventory);
+
+        InventoryTransaction transaction = new InventoryTransaction();
+        transaction.setInventoryId(savedInventory.getId());
+        transaction.setTransactionType("INITIAL");
+        transaction.setQuantityChange(BigDecimal.ZERO);
+        transaction.setQuantityBefore(BigDecimal.ZERO);
+        transaction.setQuantityAfter(BigDecimal.ZERO);
+        transaction.setNotes("Product created - initial inventory");
+        transaction.setCreatedAt(OffsetDateTime.now());
+        inventoryTransactionRepository.save(transaction);
     }
 
     @Transactional(readOnly = true)

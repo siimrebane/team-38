@@ -61,6 +61,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/organizations").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/account/onboarding").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/products").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/inventory").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/inventory/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2

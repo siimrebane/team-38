@@ -40,6 +40,7 @@ public class ProductController {
         if (user.getOrganizationId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User has no organization");
         }
+
         return productService.create(request, user.getOrganizationId());
 
     }

@@ -8,5 +8,6 @@ import java.util.Optional;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     Optional<Category> findByIdAndOrganizationId(Long id, Long organizationId);
+    Iterable<Category> findAllByOrganizationId(Long organizationId);
     boolean existsByOrganizationIdAndNameIgnoreCase(Long organizationId, String name);
 }

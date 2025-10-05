@@ -6,6 +6,8 @@ import com.borsibaar.backend.service.CategoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/categories")
 public class CategoryController {
@@ -19,6 +21,11 @@ public class CategoryController {
     @ResponseStatus(HttpStatus.CREATED)
     public CategoryResponseDto createCategory(@RequestBody CategoryRequestDto request) {
         return categoryService.create(request);
+    }
+
+    @GetMapping
+    public List<CategoryResponseDto> getAll(){
+        return categoryService.getAllByOrg();
     }
 
     @GetMapping("/{id}")

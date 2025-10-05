@@ -11,6 +11,10 @@ import com.borsibaar.backend.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 
 @Service
 public class CategoryService {
@@ -45,6 +49,19 @@ public class CategoryService {
 
         Category saved = categoryRepository.save(category);
         return categoryMapper.toResponse(saved);
+    }
+
+    @Transactional
+    public List<CategoryResponseDto> getAllByOrg() {
+        Long orgId = 2L;
+        Iterable<Category> categories = categoryRepository.findAllByOrganizationId(orgId);
+
+        List<CategoryResponseDto> responseDtos = new ArrayList<>();
+        for (Category category : categories) {
+            responseDtos.add(categoryMapper.toResponse(category));
+        }
+
+        return responseDtos;
     }
 
     @Transactional
