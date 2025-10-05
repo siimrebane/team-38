@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   ShoppingCart,
   Plus,
@@ -50,26 +50,7 @@ export default function POS() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isProcessingSale, setIsProcessingSale] = useState(false);
 
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-    // Load cart from localStorage
-    const savedCart = localStorage.getItem("pos-cart");
-    if (savedCart) {
-      setCart(JSON.parse(savedCart));
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [selectedCategory]);
-
-  useEffect(() => {
-    // Save cart to localStorage
-    localStorage.setItem("pos-cart", JSON.stringify(cart));
-  }, [cart]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       const url = selectedCategory
@@ -90,7 +71,7 @@ export default function POS() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCategory]);
 
   const fetchCategories = async () => {
     try {
@@ -104,47 +85,77 @@ export default function POS() {
     }
   };
 
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+    // Load cart from localStorage
+    const savedCart = localStorage.getItem("pos-cart");
+    if (savedCart) {
+      setCart(JSON.parse(savedCart));
+    }
+  }, [fetchProducts]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [selectedCategory, fetchProducts]);
+
+  useEffect(() => {
+    // Save cart to localStorage
+    localStorage.setItem("pos-cart", JSON.stringify(cart));
+  }, [cart]);
+
   const addToCart = (product: Product) => {
-    const existingItem = cart.find(item => item.productId === product.productId);
+    const existingItem = cart.find(
+      (item) => item.productId === product.productId
+    );
 
     if (existingItem) {
       if (existingItem.quantity < product.quantity) {
-        setCart(cart.map(item =>
-          item.productId === product.productId
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        ));
+        setCart(
+          cart.map((item) =>
+            item.productId === product.productId
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          )
+        );
       }
     } else {
       if (product.quantity > 0) {
-        setCart([...cart, {
-          productId: product.productId,
-          productName: product.productName,
-          quantity: 1,
-          maxQuantity: product.quantity,
-          unitPrice: product.unitPrice
-        }]);
+        setCart([
+          ...cart,
+          {
+            productId: product.productId,
+            productName: product.productName,
+            quantity: 1,
+            maxQuantity: product.quantity,
+            unitPrice: product.unitPrice,
+          },
+        ]);
       }
     }
   };
 
   const updateCartQuantity = (productId: number, change: number) => {
-    setCart(cart.map(item => {
-      if (item.productId === productId) {
-        const newQuantity = item.quantity + change;
-        if (newQuantity <= 0) {
-          return null; // Will be filtered out
-        }
-        if (newQuantity <= item.maxQuantity) {
-          return { ...item, quantity: newQuantity };
-        }
-      }
-      return item;
-    }).filter(Boolean) as CartItem[]);
+    setCart(
+      cart
+        .map((item) => {
+          if (item.productId === productId) {
+            const newQuantity = item.quantity + change;
+            if (newQuantity <= 0) {
+              return null; // Will be filtered out
+            }
+            if (newQuantity <= item.maxQuantity) {
+              return { ...item, quantity: newQuantity };
+            }
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[]
+    );
   };
 
   const removeFromCart = (productId: number) => {
-    setCart(cart.filter(item => item.productId !== productId));
+    setCart(cart.filter((item) => item.productId !== productId));
   };
 
   const clearCart = () => {
@@ -157,11 +168,11 @@ export default function POS() {
     setIsProcessingSale(true);
     try {
       const saleRequest = {
-        items: cart.map(item => ({
+        items: cart.map((item) => ({
           productId: item.productId,
-          quantity: item.quantity
+          quantity: item.quantity,
         })),
-        notes: "POS Sale"
+        notes: "POS Sale",
       };
 
       const response = await fetch("/api/backend/sales", {
@@ -177,29 +188,36 @@ export default function POS() {
         throw new Error(errorText || "Failed to process sale");
       }
 
-      const result = await response.json();
+      // const result = await response.json();
 
       // Clear cart and refresh products
       clearCart();
       fetchProducts();
-
-      alert(`Sale processed successfully! Total: $${result.totalAmount}`);
     } catch (err) {
-      alert(`Error processing sale: ${err instanceof Error ? err.message : "Unknown error"}`);
+      alert(
+        `Error processing sale: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`
+      );
     } finally {
       setIsProcessingSale(false);
     }
   };
 
-  const filteredProducts = products.filter(product =>
+  const filteredProducts = products.filter((product) =>
     product.productName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const cartTotal = cart.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+  const cartTotal = cart.reduce(
+    (sum, item) => sum + item.quantity * item.unitPrice,
+    0
+  );
 
   const getStockStatus = (quantity: number) => {
-    if (quantity === 0) return { color: "bg-red-100 text-red-800", label: "Out of Stock" };
-    if (quantity < 10) return { color: "bg-yellow-100 text-yellow-800", label: "Low Stock" };
+    if (quantity === 0)
+      return { color: "bg-red-100 text-red-800", label: "Out of Stock" };
+    if (quantity < 10)
+      return { color: "bg-yellow-100 text-yellow-800", label: "Low Stock" };
     return { color: "bg-green-100 text-green-800", label: "In Stock" };
   };
 
@@ -222,7 +240,9 @@ export default function POS() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <ShoppingCart className="w-8 h-8 text-blue-600" />
-              <h1 className="text-3xl font-bold text-gray-100">Point of Sales</h1>
+              <h1 className="text-3xl font-bold text-gray-100">
+                Point of Sales
+              </h1>
             </div>
             <div className="text-sm text-gray-400">
               Products: {filteredProducts.length}
@@ -248,7 +268,9 @@ export default function POS() {
             {categories.map((category) => (
               <Button
                 key={category.id}
-                variant={selectedCategory === category.id ? "default" : "outline"}
+                variant={
+                  selectedCategory === category.id ? "default" : "outline"
+                }
                 onClick={() => setSelectedCategory(category.id)}
                 className="h-8"
               >
@@ -277,7 +299,9 @@ export default function POS() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredProducts.map((product) => {
                 const status = getStockStatus(product.quantity);
-                const inCart = cart.find(item => item.productId === product.productId);
+                const inCart = cart.find(
+                  (item) => item.productId === product.productId
+                );
 
                 return (
                   <div
@@ -293,8 +317,12 @@ export default function POS() {
                     </div>
 
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-lg font-bold text-green-400">${product.unitPrice.toFixed(2)}</span>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                      <span className="text-lg font-bold text-green-400">
+                        ${product.unitPrice.toFixed(2)}
+                      </span>
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${status.color}`}
+                      >
                         {status.label}
                       </span>
                     </div>
@@ -302,7 +330,9 @@ export default function POS() {
                     <div className="flex items-center justify-between text-sm text-gray-400">
                       <span>Stock: {product.quantity}</span>
                       {inCart && (
-                        <span className="text-blue-400">In cart: {inCart.quantity}</span>
+                        <span className="text-blue-400">
+                          In cart: {inCart.quantity}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -328,13 +358,17 @@ export default function POS() {
               <>
                 <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
                   {cart.map((item) => (
-                    <div key={item.productId} className="flex items-center justify-between p-2 bg-gray-800 rounded">
+                    <div
+                      key={item.productId}
+                      className="flex items-center justify-between p-2 bg-gray-800 rounded"
+                    >
                       <div className="flex-1">
                         <p className="font-medium text-gray-100 truncate">
                           {item.productName}
                         </p>
                         <p className="text-sm text-gray-400">
-                          ${item.unitPrice} × {item.quantity} = ${(item.unitPrice * item.quantity).toFixed(2)}
+                          ${item.unitPrice} × {item.quantity} = $
+                          {(item.unitPrice * item.quantity).toFixed(2)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-2">
@@ -346,7 +380,9 @@ export default function POS() {
                         >
                           <Minus className="w-3 h-3" />
                         </Button>
-                        <span className="text-sm w-6 text-center">{item.quantity}</span>
+                        <span className="text-sm w-6 text-center">
+                          {item.quantity}
+                        </span>
                         <Button
                           size="sm"
                           variant="outline"
