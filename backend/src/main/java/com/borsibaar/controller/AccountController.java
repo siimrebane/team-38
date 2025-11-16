@@ -35,26 +35,44 @@ public class AccountController {
                     user.getOrganizationId() == null));
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).build();
+        } catch (Exception e) {
+            // Log unexpected errors for debugging
+            // This will be handled by ApiExceptionHandler and return ProblemDetail
+            throw new ResponseStatusException(
+                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to retrieve account information: " + e.getMessage(),
+                    e);
         }
     }
 
     @PostMapping("/onboarding")
     @Transactional
     public ResponseEntity<Void> finish(@RequestBody onboardingRequest req) {
-        if (req.organizationId() == null || !req.acceptTerms())
-            return ResponseEntity.badRequest().build();
+        try {
+            if (req.organizationId() == null || !req.acceptTerms())
+                return ResponseEntity.badRequest().build();
 
-        // Allow users without organization (that's the point of onboarding)
-        User user = SecurityUtils.getCurrentUser(false);
+            // Allow users without organization (that's the point of onboarding)
+            User user = SecurityUtils.getCurrentUser(false);
 
-        // Set org only (idempotent: do nothing if already set)
-        if (user.getOrganizationId() == null) {
-            user.setOrganizationId(req.organizationId());
-            userRepository.save(user);
+            // Set org only (idempotent: do nothing if already set)
+            if (user.getOrganizationId() == null) {
+                user.setOrganizationId(req.organizationId());
+                userRepository.save(user);
+            }
+
+            // If later you add orgId to JWT, re-issue token here.
+            return ResponseEntity.noContent().build();
+        } catch (ResponseStatusException e) {
+            throw e; // Re-throw to be handled by exception handler
+        } catch (Exception e) {
+            // Log unexpected errors for debugging
+            // This will be handled by ApiExceptionHandler and return ProblemDetail
+            throw new ResponseStatusException(
+                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to complete onboarding: " + e.getMessage(),
+                    e);
         }
-
-        // If later you add orgId to JWT, re-issue token here.
-        return ResponseEntity.noContent().build();
     }
 
 }
