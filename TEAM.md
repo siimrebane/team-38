@@ -5,5 +5,5 @@
 * Anastasia Berestovaja
 * Kristina Aprelkova
 * Valeria Blagodatskaja
-* Svitlana Korjus
+* Svitlana Korjus (Github: svitlana-web)
 * Ilja Lebedev
