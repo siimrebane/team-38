@@ -5,5 +5,5 @@
 * Anastasia Berestovaja
 * Kristina Aprelkova
 * Valeria Blagodatskaja
-* Svitlana Korjus
+* Svitlana Korjus - frontend, backend (merge conflict practice)
 * Ilja Lebedev
