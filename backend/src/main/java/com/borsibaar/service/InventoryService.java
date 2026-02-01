@@ -1,17 +1,8 @@
 package com.borsibaar.service;
 
 import com.borsibaar.dto.*;
-import com.borsibaar.entity.BarStation;
-import com.borsibaar.entity.Inventory;
-import com.borsibaar.entity.InventoryTransaction;
-import com.borsibaar.entity.Product;
-import com.borsibaar.entity.User;
-import com.borsibaar.mapper.InventoryMapper;
-import com.borsibaar.repository.BarStationRepository;
-import com.borsibaar.repository.InventoryRepository;
-import com.borsibaar.repository.InventoryTransactionRepository;
-import com.borsibaar.repository.ProductRepository;
-import com.borsibaar.repository.UserRepository;
+import com.borsibaar.entity.*;
+import com.borsibaar.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,7 +24,6 @@ public class InventoryService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final BarStationRepository barStationRepository;
-    private final InventoryMapper inventoryMapper;
 
     @Transactional(readOnly = true)
     public List<InventoryResponseDto> getByOrganization(Long organizationId) {
@@ -52,31 +42,26 @@ public class InventoryService {
 
         return inventories.stream()
                 .map(inv -> {
-                    InventoryResponseDto base = inventoryMapper.toResponse(inv);
-                    Product product = productRepository.findById(inv.getProductId())
-                            .orElse(null);
-
-                    if (product == null)
-                        return null;
-                    if (!product.isActive()) {
+                    Product product = inv.getProduct();
+                    if (product == null || !product.isActive()) {
                         return null;
                     }
 
-                    String productName = product.getName();
                     BigDecimal unitPrice = Optional.ofNullable(inv.getAdjustedPrice())
                             .orElse(product.getBasePrice());
 
                     return new InventoryResponseDto(
-                            base.id(),
-                            base.productId(),
-                            productName,
-                            base.quantity(),
+                            inv.getId(),
+                            product.getId(),
+                            product.getName(),
+                            inv.getQuantity(),
                             unitPrice,
                             product.getDescription(),
                             product.getBasePrice(),
                             product.getMinPrice(),
                             product.getMaxPrice(),
-                            base.updatedAt());
+                            inv.getUpdatedAt().toString()
+                    );
                 })
                 .filter(Objects::nonNull)
                 .sorted(Comparator.comparing(InventoryResponseDto::productName))
@@ -90,29 +75,26 @@ public class InventoryService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "No inventory found for this product"));
 
-        InventoryResponseDto base = inventoryMapper.toResponse(inventory);
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "No product found"));
+        Product product = inventory.getProduct();
         if (!product.isActive()) {
             throw new ResponseStatusException(HttpStatus.GONE, "Product is deleted");
         }
 
-        String productName = product.getName();
         BigDecimal unitPrice = Optional.ofNullable(inventory.getAdjustedPrice())
                 .orElse(product.getBasePrice());
-        BigDecimal basePrice = product.getBasePrice();
 
         return new InventoryResponseDto(
-                base.id(),
-                base.productId(),
-                productName,
-                base.quantity(),
+                inventory.getId(),
+                product.getId(),
+                product.getName(),
+                inventory.getQuantity(),
                 unitPrice,
-                product.getDescription(), basePrice,
+                product.getDescription(),
+                product.getBasePrice(),
                 product.getMinPrice(),
                 product.getMaxPrice(),
-                base.updatedAt());
+                inventory.getUpdatedAt().toString()
+        );
     }
 
     @Transactional
@@ -147,17 +129,18 @@ public class InventoryService {
         createTransaction(inventory, "PURCHASE", request.quantity(),
                 oldQuantity, newQuantity, currentPrice, currentPrice, null, request.notes(), userId);
 
-        InventoryResponseDto base = inventoryMapper.toResponse(inventory);
         return new InventoryResponseDto(
-                base.id(),
-                base.productId(),
+                inventory.getId(),
+                product.getId(),
                 product.getName(),
-                base.quantity(),
+                inventory.getQuantity(),
                 currentPrice,
-                product.getDescription(), null,
+                product.getDescription(),
+                null,
                 product.getMinPrice(),
                 product.getMaxPrice(),
-                base.updatedAt());
+                inventory.getUpdatedAt().toString()
+        );
     }
 
     @Transactional
@@ -191,17 +174,18 @@ public class InventoryService {
                 oldQuantity, newQuantity, currentPrice, currentPrice, request.referenceId(),
                 request.notes(), userId);
 
-        InventoryResponseDto base = inventoryMapper.toResponse(inventory);
         return new InventoryResponseDto(
-                base.id(),
-                base.productId(),
+                inventory.getId(),
+                product.getId(),
                 product.getName(),
-                base.quantity(),
+                inventory.getQuantity(),
                 currentPrice,
-                product.getDescription(), null,
+                product.getDescription(),
+                null,
                 product.getMinPrice(),
                 product.getMaxPrice(),
-                base.updatedAt());
+                inventory.getUpdatedAt().toString()
+        );
     }
 
     @Transactional
@@ -228,17 +212,18 @@ public class InventoryService {
                 oldQuantity, request.newQuantity(), currentPrice, currentPrice, null, request.notes(),
                 userId);
 
-        InventoryResponseDto base = inventoryMapper.toResponse(inventory);
         return new InventoryResponseDto(
-                base.id(),
-                base.productId(),
+                inventory.getId(),
+                product.getId(),
                 product.getName(),
-                base.quantity(),
+                inventory.getQuantity(),
                 currentPrice,
-                product.getDescription(), null,
+                product.getDescription(),
+                null,
                 product.getMinPrice(),
                 product.getMaxPrice(),
-                base.updatedAt());
+                inventory.getUpdatedAt().toString()
+        );
     }
 
     @Transactional(readOnly = true)
@@ -449,25 +434,21 @@ public class InventoryService {
     }
 
 
-    private BigDecimal calculateTotalRevenue(List<InventoryTransaction> userStationTransactions) {
-        return userStationTransactions.stream()
+    private BigDecimal calculateTotalRevenue(List<InventoryTransaction> transactions) {
+        return transactions.stream()
                 .map(transaction -> {
-                    // Get inventory to find product
-                    return inventoryRepository
-                            .findById(transaction.getInventoryId())
-                            .flatMap(inventory -> productRepository
-                                    .findById(inventory
-                                            .getProductId()))
-                            .map(product -> {
-                                // Calculate revenue for this
-                                // transaction
-                                BigDecimal quantitySold = transaction
-                                        .getQuantityChange()
-                                        .abs();
-                                return product.getBasePrice()
-                                        .multiply(quantitySold);
-                            })
-                            .orElse(BigDecimal.ZERO);
+                    Inventory inventory = transaction.getInventory();
+                    if (inventory == null) {
+                        return BigDecimal.ZERO;
+                    }
+
+                    Product product = inventory.getProduct();
+                    if (product == null) {
+                        return BigDecimal.ZERO;
+                    }
+
+                    BigDecimal quantitySold = transaction.getQuantityChange().abs();
+                    return product.getBasePrice().multiply(quantitySold);
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
