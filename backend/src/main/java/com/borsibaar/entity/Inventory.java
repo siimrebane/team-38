@@ -37,8 +37,8 @@ public class Inventory {
     @Column(name = "adjusted_price", precision = 19, scale = 4)
     private BigDecimal adjustedPrice;
 
-    @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "product_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
     @OneToMany(mappedBy = "inventory")

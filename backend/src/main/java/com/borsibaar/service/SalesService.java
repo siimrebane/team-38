@@ -70,20 +70,13 @@ public class SalesService {
                                         HttpStatus.BAD_REQUEST, "Product is not active: " + product.getName());
                 }
 
-                // Get inventory for this product
-                /*
-                 * Inventory inventory = inventoryRepository
-                 * .findByOrganizationIdAndProductId(organizationId, item.productId())
-                 * .orElseThrow(() -> new ResponseStatusException(
-                 * HttpStatus.NOT_FOUND, "No inventory found for product: " +
-                 * product.getName()));
-                 */
-                Inventory inventory = Optional.ofNullable(product.getInventory())
-                                .orElseThrow(() -> new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND,
-                                                "No inventory found for product: " + product.getName()));
+               Inventory inventory = inventoryRepository
+                       .findByOrganizationIdAndProductId(organizationId, item.productId())
+                       .orElseThrow(() -> new ResponseStatusException(
+                               HttpStatus.NOT_FOUND,
+                               "No inventory found for product: " + product.getName()));
 
-                // Check stock availability
+            // Check stock availability
                 BigDecimal oldQuantity = inventory.getQuantity();
                 BigDecimal newQuantity = oldQuantity.subtract(item.quantity());
 

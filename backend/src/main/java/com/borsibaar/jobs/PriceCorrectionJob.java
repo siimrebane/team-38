@@ -39,7 +39,7 @@ public class PriceCorrectionJob {
 
         int updatedCount = 0;
         for (Product product : inactiveProducts) {
-            Inventory inventory = Optional.ofNullable(product.getInventory())
+            Inventory inventory = inventoryRepository.findByProduct(product)
                     .orElseGet(() -> {
                         Inventory newInv = new Inventory();
                         newInv.setProduct(product);

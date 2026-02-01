@@ -1,6 +1,7 @@
 package com.borsibaar.repository;
 
 import com.borsibaar.entity.Inventory;
+import com.borsibaar.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +12,8 @@ import java.util.Optional;
 
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
+    Optional<Inventory> findByProduct(Product product);
+
     @Query("""
             SELECT i FROM Inventory i
                            JOIN i.product p
