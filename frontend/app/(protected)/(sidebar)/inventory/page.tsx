@@ -586,7 +586,7 @@ export default function Inventory() {
                             </Button>
                             <Button
                               onClick={() => openHistoryModal(item)}
-                              className="p-2 text-gray-400 bg-gray-700 hover:bg-gray-800 rounded-lg transition"
+                              className="p-2 text-gray-300 bg-gray-600 hover:bg-gray-700 rounded-lg transition"
                               title="View History"
                             >
                               <History className="w-4 h-4" />
