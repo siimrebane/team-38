@@ -5,5 +5,5 @@
 * Anastasia Berestovaja
 * Kristina Aprelkova
 * Valeria Blagodatskaja
-* Svitlana Korjus (Github: svitlana-web)
+* Svitlana Korjus - frontend, backend (Github: svitlana-web)
 * Ilja Lebedev
