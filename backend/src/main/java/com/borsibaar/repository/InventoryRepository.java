@@ -19,6 +19,4 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
             "WHERE i.organizationId = :organizationId AND p.categoryId = :categoryId")
     List<Inventory> findByOrganizationIdAndCategoryId(@Param("organizationId") Long organizationId,
             @Param("categoryId") Long categoryId);
-
-    boolean existsByProductId(Long productId);
 }
