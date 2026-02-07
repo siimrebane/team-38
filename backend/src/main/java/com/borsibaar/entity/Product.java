@@ -6,6 +6,8 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -46,8 +48,8 @@ public class Product {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
-    @OneToOne(mappedBy = "product", fetch = FetchType.EAGER)
-    private Inventory inventory;
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    private List<Inventory> inventories = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id", insertable = false, updatable = false)

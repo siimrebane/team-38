@@ -22,13 +22,6 @@ public class Inventory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * TODO: remove duplicate organizationId (already in products table)
-     */
-    @Deprecated
-    @Column(name = "organization_id", nullable = false)
-    private Long organizationId;
-
     @Column(name = "product_id", nullable = false, insertable = false, updatable = false)
     private Long productId;
 
@@ -44,8 +37,8 @@ public class Inventory {
     @Column(name = "adjusted_price", precision = 19, scale = 4)
     private BigDecimal adjustedPrice;
 
-    @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "product_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
     @OneToMany(mappedBy = "inventory")
@@ -53,7 +46,6 @@ public class Inventory {
 
     // Custom constructor for easy creation
     public Inventory(Long organizationId, Product product, BigDecimal quantity, BigDecimal adjustedPrice) {
-        this.organizationId = organizationId;
         this.product = product;
         this.quantity = quantity;
         this.adjustedPrice = adjustedPrice;

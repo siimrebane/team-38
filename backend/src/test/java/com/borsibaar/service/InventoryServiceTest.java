@@ -1,23 +1,8 @@
 package com.borsibaar.service;
 
-import com.borsibaar.dto.AddStockRequestDto;
-import com.borsibaar.dto.InventoryResponseDto;
-import com.borsibaar.dto.InventoryTransactionResponseDto;
-import com.borsibaar.dto.RemoveStockRequestDto;
-import com.borsibaar.dto.AdjustStockRequestDto;
-import com.borsibaar.dto.StationSalesStatsResponseDto;
-import com.borsibaar.dto.UserSalesStatsResponseDto;
-import com.borsibaar.entity.BarStation;
-import com.borsibaar.entity.Inventory;
-import com.borsibaar.entity.InventoryTransaction;
-import com.borsibaar.entity.Product;
-import com.borsibaar.entity.User;
-import com.borsibaar.mapper.InventoryMapper;
-import com.borsibaar.repository.BarStationRepository;
-import com.borsibaar.repository.InventoryRepository;
-import com.borsibaar.repository.InventoryTransactionRepository;
-import com.borsibaar.repository.ProductRepository;
-import com.borsibaar.repository.UserRepository;
+import com.borsibaar.dto.*;
+import com.borsibaar.entity.*;
+import com.borsibaar.repository.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -25,7 +10,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
@@ -34,7 +18,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,12 +40,6 @@ class InventoryServiceTest {
     @Mock
     private BarStationRepository barStationRepository;
 
-    @Mock
-    private InventoryMapper inventoryMapper;
-
-    @Mock
-    private ClientRegistrationRepository clientRegistrationRepository;
-
     @InjectMocks private InventoryService inventoryService;
 
     private final UUID userId = UUID.randomUUID();
@@ -71,12 +50,12 @@ class InventoryServiceTest {
         when(productRepository.findById(5L)).thenReturn(Optional.of(product));
         when(inventoryRepository.findByOrganizationIdAndProductId(1L, 5L)).thenReturn(Optional.empty());
         when(inventoryRepository.save(any(Inventory.class))).thenAnswer(inv -> { Inventory i = inv.getArgument(0); i.setId(77L); return i; });
-        when(inventoryMapper.toResponse(any())).thenAnswer(inv -> {
-            Inventory i = inv.getArgument(0); return new InventoryResponseDto(i.getId(), i.getOrganizationId(), i.getProductId(), "P", i.getQuantity(), i.getAdjustedPrice(), product.getDescription(), null, null, null, i.getUpdatedAt().toString()); });
-
         AddStockRequestDto request = new AddStockRequestDto(5L, BigDecimal.valueOf(10), "Notes");
+
         InventoryResponseDto dto = inventoryService.addStock(request, userId, 1L);
+
         assertEquals(BigDecimal.valueOf(10), dto.quantity());
+        assertEquals(5L, dto.productId());
         verify(inventoryTransactionRepository).save(any(InventoryTransaction.class));
     }
 
@@ -85,59 +64,62 @@ class InventoryServiceTest {
         Product product = new Product(); product.setId(5L); product.setOrganizationId(1L); product.setActive(false);
         when(productRepository.findById(5L)).thenReturn(Optional.of(product));
         AddStockRequestDto request = new AddStockRequestDto(5L, BigDecimal.ONE, null);
+
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> inventoryService.addStock(request, userId, 1L));
+
         assertEquals(HttpStatus.GONE, ex.getStatusCode());
     }
 
     @Test
     void removeStock_Insufficient_ThrowsBadRequest() {
         Product product = new Product(); product.setId(5L); product.setOrganizationId(1L); product.setActive(true); product.setBasePrice(BigDecimal.ONE);
-        Inventory inv = new Inventory(); inv.setId(9L); inv.setOrganizationId(1L); inv.setProduct(product); inv.setProductId(5L); inv.setQuantity(BigDecimal.valueOf(2)); inv.setAdjustedPrice(BigDecimal.ONE); inv.setUpdatedAt(OffsetDateTime.now());
+        Inventory inv = new Inventory(); inv.setId(9L); inv.setProduct(product); inv.setQuantity(BigDecimal.valueOf(2)); inv.setAdjustedPrice(BigDecimal.ONE); inv.setUpdatedAt(OffsetDateTime.now());
         when(productRepository.findById(5L)).thenReturn(Optional.of(product));
         when(inventoryRepository.findByOrganizationIdAndProductId(1L, 5L)).thenReturn(Optional.of(inv));
         RemoveStockRequestDto request = new RemoveStockRequestDto(5L, BigDecimal.valueOf(5), null, null);
+
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> inventoryService.removeStock(request, userId, 1L));
+
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test
     void adjustStock_Success_CreatesTransaction() {
         Product product = new Product(); product.setId(5L); product.setOrganizationId(1L); product.setActive(true); product.setBasePrice(BigDecimal.valueOf(2));
-        Inventory inv = new Inventory(); inv.setId(9L); inv.setOrganizationId(1L); inv.setProduct(product); inv.setProductId(5L); inv.setQuantity(BigDecimal.valueOf(5)); inv.setAdjustedPrice(BigDecimal.valueOf(2)); inv.setUpdatedAt(OffsetDateTime.now());
+        Inventory inv = new Inventory(); inv.setId(9L); inv.setProduct(product); inv.setQuantity(BigDecimal.valueOf(5)); inv.setAdjustedPrice(BigDecimal.valueOf(2)); inv.setUpdatedAt(OffsetDateTime.now());
         when(productRepository.findById(5L)).thenReturn(Optional.of(product));
         when(inventoryRepository.findByOrganizationIdAndProductId(1L, 5L)).thenReturn(Optional.of(inv));
         when(inventoryRepository.save(any(Inventory.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-        when(inventoryMapper.toResponse(any())).thenAnswer(a -> {
-            Inventory i = a.getArgument(0); return new InventoryResponseDto(i.getId(), i.getOrganizationId(), i.getProductId(), "Prod", i.getQuantity(), i.getAdjustedPrice(), product.getDescription(), null, null, null, i.getUpdatedAt().toString()); });
-
         AdjustStockRequestDto request = new AdjustStockRequestDto(5L, BigDecimal.valueOf(8), "Adj");
+
         InventoryResponseDto dto = inventoryService.adjustStock(request, userId, 1L);
+
         assertEquals(BigDecimal.valueOf(8), dto.quantity());
         verify(inventoryTransactionRepository).save(any(InventoryTransaction.class));
     }
 
     @Test
     void getByOrganization_FiltersInactiveProducts() {
-        Inventory inv1 = new Inventory(); inv1.setId(1L); inv1.setOrganizationId(1L); inv1.setProductId(10L); inv1.setQuantity(BigDecimal.ONE); inv1.setUpdatedAt(OffsetDateTime.now());
-        Inventory inv2 = new Inventory(); inv2.setId(2L); inv2.setOrganizationId(1L); inv2.setProductId(11L); inv2.setQuantity(BigDecimal.ONE); inv2.setUpdatedAt(OffsetDateTime.now());
-        when(inventoryRepository.findByOrganizationId(1L)).thenReturn(List.of(inv1, inv2));
         Product p1 = new Product(); p1.setId(10L); p1.setActive(true); p1.setBasePrice(BigDecimal.ONE); p1.setName("A");
         Product p2 = new Product(); p2.setId(11L); p2.setActive(false); p2.setBasePrice(BigDecimal.ONE); p2.setName("B");
-        when(productRepository.findById(10L)).thenReturn(Optional.of(p1));
-        when(productRepository.findById(11L)).thenReturn(Optional.of(p2));
-        when(inventoryMapper.toResponse(inv1)).thenReturn(new InventoryResponseDto(1L,1L,10L,"A",BigDecimal.ONE,BigDecimal.ONE, "abc", null,null,null,OffsetDateTime.now().toString()));
+        Inventory inv1 = new Inventory(); inv1.setId(1L); inv1.setProduct(p1); inv1.setQuantity(BigDecimal.ONE); inv1.setUpdatedAt(OffsetDateTime.now());
+        Inventory inv2 = new Inventory(); inv2.setId(2L); inv2.setProduct(p2); inv2.setQuantity(BigDecimal.ONE); inv2.setUpdatedAt(OffsetDateTime.now());
+        when(inventoryRepository.findByOrganizationId(1L)).thenReturn(List.of(inv1, inv2));
+
         List<InventoryResponseDto> result = inventoryService.getByOrganization(1L);
+
         assertEquals(1, result.size());
     }
 
     @Test
     void getByProductAndOrganization_ProductInactive_Gone() {
-        Inventory inv = new Inventory(); inv.setId(1L); inv.setOrganizationId(1L); inv.setProductId(10L); inv.setQuantity(BigDecimal.ONE); inv.setUpdatedAt(OffsetDateTime.now());
-        when(inventoryRepository.findByOrganizationIdAndProductId(1L, 10L)).thenReturn(Optional.of(inv));
         Product p = new Product(); p.setId(10L); p.setActive(false); p.setBasePrice(BigDecimal.ONE); p.setName("A");
-        when(productRepository.findById(10L)).thenReturn(Optional.of(p));
+        Inventory inv = new Inventory(); inv.setId(1L); inv.setProduct(p); inv.setQuantity(BigDecimal.ONE); inv.setUpdatedAt(OffsetDateTime.now());
+        when(inventoryRepository.findByOrganizationIdAndProductId(1L, 10L)).thenReturn(Optional.of(inv));
+
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> inventoryService.getByProductAndOrganization(10L, 1L));
+
         assertEquals(HttpStatus.GONE, ex.getStatusCode());
     }
 
@@ -146,21 +128,23 @@ class InventoryServiceTest {
         Product product = new Product(); product.setId(5L); product.setOrganizationId(2L); product.setActive(true);
         when(productRepository.findById(5L)).thenReturn(Optional.of(product));
         AddStockRequestDto request = new AddStockRequestDto(5L, BigDecimal.ONE, null);
+
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> inventoryService.addStock(request, userId, 1L));
+
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
     void removeStock_Success_CreatesNegativeTransaction() {
         Product product = new Product(); product.setId(5L); product.setOrganizationId(1L); product.setActive(true); product.setBasePrice(new BigDecimal("2.00"));
-        Inventory inv = new Inventory(); inv.setId(10L); inv.setOrganizationId(1L); inv.setProduct(product); inv.setProductId(5L); inv.setQuantity(new BigDecimal("10")); inv.setAdjustedPrice(new BigDecimal("2.00")); inv.setUpdatedAt(OffsetDateTime.now());
+        Inventory inv = new Inventory(); inv.setId(10L); inv.setProduct(product); inv.setQuantity(new BigDecimal("10")); inv.setAdjustedPrice(new BigDecimal("2.00")); inv.setUpdatedAt(OffsetDateTime.now());
         when(productRepository.findById(5L)).thenReturn(Optional.of(product));
         when(inventoryRepository.findByOrganizationIdAndProductId(1L, 5L)).thenReturn(Optional.of(inv));
         when(inventoryRepository.save(any(Inventory.class))).thenAnswer(a -> a.getArgument(0));
-        when(inventoryMapper.toResponse(any())).thenAnswer(a -> { Inventory i = a.getArgument(0); return new InventoryResponseDto(i.getId(), i.getOrganizationId(), i.getProductId(), "Prod", i.getQuantity(), i.getAdjustedPrice(), product.getDescription(), null, null, null, i.getUpdatedAt().toString());});
-
         RemoveStockRequestDto request = new RemoveStockRequestDto(5L, new BigDecimal("3"), "sale-1", "note");
+
         InventoryResponseDto dto = inventoryService.removeStock(request, userId, 1L);
+
         assertEquals(new BigDecimal("7"), dto.quantity());
         ArgumentCaptor<InventoryTransaction> txCap = ArgumentCaptor.forClass(InventoryTransaction.class);
         verify(inventoryTransactionRepository).save(txCap.capture());
@@ -170,7 +154,7 @@ class InventoryServiceTest {
 
     @Test
     void getTransactionHistory_MapsUserInfo() {
-        Inventory inv = new Inventory(); inv.setId(100L); inv.setOrganizationId(1L); inv.setProductId(10L);
+        Inventory inv = new Inventory(); inv.setId(100L); inv.setProductId(10L);
         when(inventoryRepository.findByOrganizationIdAndProductId(1L, 10L)).thenReturn(Optional.of(inv));
         UUID uid = UUID.randomUUID();
         InventoryTransaction tx = new InventoryTransaction();
@@ -194,28 +178,22 @@ class InventoryServiceTest {
         UUID uid = UUID.randomUUID();
         Long stationId = 7L;
         // two transactions for same user/station, different inventories
-        InventoryTransaction t1 = new InventoryTransaction(); t1.setInventoryId(11L); t1.setTransactionType("SALE"); t1.setReferenceId("o1"); t1.setQuantityChange(new BigDecimal("-2")); t1.setCreatedBy(uid); t1.setBarStationId(stationId);
-        InventoryTransaction t2 = new InventoryTransaction(); t2.setInventoryId(12L); t2.setTransactionType("SALE"); t2.setReferenceId("o2"); t2.setQuantityChange(new BigDecimal("-1")); t2.setCreatedBy(uid); t2.setBarStationId(stationId);
-        when(inventoryTransactionRepository.findSaleTransactionsByOrganizationId(orgId)).thenReturn(List.of(t1, t2));
-
-        // inventories map to products with base prices
-        Inventory inv1 = new Inventory(); inv1.setId(11L); inv1.setProductId(101L);
-        Inventory inv2 = new Inventory(); inv2.setId(12L); inv2.setProductId(102L);
-        when(inventoryRepository.findById(11L)).thenReturn(Optional.of(inv1));
-        when(inventoryRepository.findById(12L)).thenReturn(Optional.of(inv2));
         Product p1 = new Product(); p1.setId(101L); p1.setBasePrice(new BigDecimal("3.00"));
         Product p2 = new Product(); p2.setId(102L); p2.setBasePrice(new BigDecimal("5.00"));
-        when(productRepository.findById(101L)).thenReturn(Optional.of(p1));
-        when(productRepository.findById(102L)).thenReturn(Optional.of(p2));
-
+        Inventory inv1 = new Inventory(); inv1.setId(11L); inv1.setProduct(p1);
+        Inventory inv2 = new Inventory(); inv2.setId(12L); inv2.setProduct(p2);
+        InventoryTransaction t1 = new InventoryTransaction(); t1.setInventory(inv1); t1.setTransactionType("SALE"); t1.setReferenceId("o1"); t1.setQuantityChange(new BigDecimal("-2")); t1.setCreatedBy(uid); t1.setBarStationId(stationId);
+        InventoryTransaction t2 = new InventoryTransaction(); t2.setInventory(inv2); t2.setTransactionType("SALE"); t2.setReferenceId("o2"); t2.setQuantityChange(new BigDecimal("-1")); t2.setCreatedBy(uid); t2.setBarStationId(stationId);
+        when(inventoryTransactionRepository.findSaleTransactionsByOrganizationId(orgId)).thenReturn(List.of(t1, t2));
         User user = new User(); user.setId(uid); user.setName("Bob"); user.setEmail("b@c.d");
         when(userRepository.findAllById(anyList())).thenReturn(List.of(user));
         BarStation station = new BarStation(); station.setId(stationId); station.setName("Main");
         when(barStationRepository.findAllById(anyList())).thenReturn(List.of(station));
 
         List<UserSalesStatsResponseDto> stats = inventoryService.getUserSalesStats(orgId);
+
         assertEquals(1, stats.size());
-        UserSalesStatsResponseDto s = stats.get(0);
+        UserSalesStatsResponseDto s = stats.getFirst();
         assertEquals(2L, s.salesCount());
         // revenue = 2*3 + 1*5 = 11
         assertEquals(new BigDecimal("11.00"), s.totalRevenue());
@@ -226,25 +204,20 @@ class InventoryServiceTest {
     void getStationSalesStats_ComputesCountsAndRevenue() {
         Long orgId = 1L;
         Long stationId = 7L;
-        InventoryTransaction t1 = new InventoryTransaction(); t1.setInventoryId(11L); t1.setTransactionType("SALE"); t1.setReferenceId("o1"); t1.setQuantityChange(new BigDecimal("-2")); t1.setBarStationId(stationId);
-        InventoryTransaction t2 = new InventoryTransaction(); t2.setInventoryId(12L); t2.setTransactionType("SALE"); t2.setReferenceId("o2"); t2.setQuantityChange(new BigDecimal("-1")); t2.setBarStationId(stationId);
-        when(inventoryTransactionRepository.findSaleTransactionsByOrganizationId(orgId)).thenReturn(List.of(t1, t2));
-
-        Inventory inv1 = new Inventory(); inv1.setId(11L); inv1.setProductId(101L);
-        Inventory inv2 = new Inventory(); inv2.setId(12L); inv2.setProductId(102L);
-        when(inventoryRepository.findById(11L)).thenReturn(Optional.of(inv1));
-        when(inventoryRepository.findById(12L)).thenReturn(Optional.of(inv2));
         Product p1 = new Product(); p1.setId(101L); p1.setBasePrice(new BigDecimal("3.00"));
         Product p2 = new Product(); p2.setId(102L); p2.setBasePrice(new BigDecimal("5.00"));
-        when(productRepository.findById(101L)).thenReturn(Optional.of(p1));
-        when(productRepository.findById(102L)).thenReturn(Optional.of(p2));
-
+        Inventory inv1 = new Inventory(); inv1.setId(11L); inv1.setProduct(p1);
+        Inventory inv2 = new Inventory(); inv2.setId(12L); inv2.setProduct(p2);
+        InventoryTransaction t1 = new InventoryTransaction(); t1.setInventory(inv1); t1.setTransactionType("SALE"); t1.setReferenceId("o1"); t1.setQuantityChange(new BigDecimal("-2")); t1.setBarStationId(stationId);
+        InventoryTransaction t2 = new InventoryTransaction(); t2.setInventory(inv2); t2.setTransactionType("SALE"); t2.setReferenceId("o2"); t2.setQuantityChange(new BigDecimal("-1")); t2.setBarStationId(stationId);
+        when(inventoryTransactionRepository.findSaleTransactionsByOrganizationId(orgId)).thenReturn(List.of(t1, t2));
         BarStation station = new BarStation(); station.setId(stationId); station.setName("Main");
         when(barStationRepository.findAllById(anyList())).thenReturn(List.of(station));
 
         List<StationSalesStatsResponseDto> stats = inventoryService.getStationSalesStats(orgId);
+
         assertEquals(1, stats.size());
-        StationSalesStatsResponseDto s = stats.get(0);
+        StationSalesStatsResponseDto s = stats.getFirst();
         assertEquals(2L, s.salesCount());
         assertEquals(new BigDecimal("11.00"), s.totalRevenue());
         assertEquals("Main", s.barStationName());
