@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
-import { backendUrl } from "@/utils/constants";
 
 type Org = { id: number; name: string; createdAt?: string; updatedAt?: string };
 
@@ -21,7 +20,7 @@ export default function OnboardingPage() {
 
   // Client safety guard: if user already onboarded, redirect away.
   const { data: user } = useSWR(
-    "/api/backend/account",
+    "/api/account",
     async (url: string) => {
       const r = await fetch(url, { credentials: "include" });
       if (!r.ok) return null;
@@ -40,11 +39,11 @@ export default function OnboardingPage() {
     }
   }, [user, router]);
 
-  // Load orgs via Next proxy to avoid CORS: /api/backend/organizations
+  // Load orgs via Next proxy to avoid CORS: /api/organizations
   useEffect(() => {
     (async () => {
       try {
-        const r = await fetch("/api/backend/organizations", {
+        const r = await fetch("/api/organizations", {
           credentials: "include",
         });
         if (r.ok) {
@@ -68,7 +67,7 @@ export default function OnboardingPage() {
       if (organizationId === "")
         throw new Error("Please choose an organization");
 
-      const resp = await fetch("/api/backend/account/onboarding", {
+      const resp = await fetch("/api/account/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -130,12 +129,15 @@ export default function OnboardingPage() {
         </div>
 
         <div className="mt-6 flex justify-end gap-2">
-          <a
+          <button
             className="rounded-lg border border-input px-4 py-2 text-foreground"
-            href={`${backendUrl}/logout`}
+            onClick={async () => {
+              await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+              window.location.href = "/login/";
+            }}
           >
             Cancel
-          </a>
+          </button>
           <button
             className="rounded-lg bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
             disabled={saving || !acceptTerms || organizationId === ""}

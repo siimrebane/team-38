@@ -47,7 +47,7 @@ export default function ClientProductsByCategory() {
         const organizationId = 2;
 
         const cRes = await fetch(
-          `/api/backend/categories?organizationId=${organizationId}`,
+          `/api/categories?organizationId=${organizationId}`,
           {
             cache: "no-store",
             credentials: "include",
@@ -64,7 +64,7 @@ export default function ClientProductsByCategory() {
 
         const fetches = categoryList.map(async (c) => {
           const res = await fetch(
-            `/api/backend/inventory?categoryId=${c.id}&organizationId=${organizationId}`,
+            `/api/inventory?categoryId=${c.id}&organizationId=${organizationId}`,
             {
               cache: "no-store",
               credentials: "include",

@@ -10,8 +10,6 @@ import { ProductCard } from "./ProductCard";
 import { CartSidebar } from "./CartSidebar";
 import { Product, Category, CartItem, CurrentUser, BarStation } from "./types";
 
-export const dynamic = "force-dynamic";
-
 export default function POSStation() {
   const params = useParams();
   const router = useRouter();
@@ -31,7 +29,7 @@ export default function POSStation() {
   // Fetch station and validate access
   const fetchStation = useCallback(async () => {
     try {
-      const response = await fetch(`/api/backend/bar-stations/${stationId}`);
+      const response = await fetch(`/api/bar-stations/${stationId}`);
 
       if (!response.ok) {
         if (response.status === 403 || response.status === 404) {
@@ -55,8 +53,8 @@ export default function POSStation() {
       setLoading(true);
 
       const url = selectedCategory
-        ? `/api/backend/inventory?categoryId=${selectedCategory}`
-        : "/api/backend/inventory";
+        ? `/api/inventory?categoryId=${selectedCategory}`
+        : "/api/inventory";
 
       const response = await fetch(url, {
         cache: "no-store",
@@ -76,7 +74,7 @@ export default function POSStation() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch("/api/backend/categories");
+      const response = await fetch("/api/categories");
       if (response.ok) {
         const data = await response.json();
         setCategories(data);
@@ -88,7 +86,7 @@ export default function POSStation() {
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await fetch("/api/backend/account");
+      const response = await fetch("/api/account");
       if (response.ok) {
         const data = await response.json();
         setCurrentUser(data);
@@ -195,7 +193,7 @@ export default function POSStation() {
         barStationId: parseInt(stationId),
       };
 
-      const response = await fetch("/api/backend/sales", {
+      const response = await fetch("/api/sales", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

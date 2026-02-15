@@ -46,8 +46,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
-export const dynamic = "force-dynamic";
-
 export default function Inventory() {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -94,7 +92,7 @@ export default function Inventory() {
   const fetchInventory = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/backend/inventory", {
+      const response = await fetch("/api/inventory", {
         cache: "no-store",
       });
 
@@ -116,7 +114,7 @@ export default function Inventory() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch("/api/backend/categories");
+      const response = await fetch("/api/categories");
       if (response.ok) {
         const data = await response.json();
         setCategories(data);
@@ -130,7 +128,7 @@ export default function Inventory() {
     try {
       setLoadingHistory(true);
       const response = await fetch(
-        `/api/backend/inventory/product/${productId}/history`,
+        `/api/inventory/product/${productId}/history`,
         {
           credentials: "include",
         }
@@ -150,7 +148,7 @@ export default function Inventory() {
 
   const handleCreateProduct = async () => {
     try {
-      const productResponse = await fetch("/api/backend/product", {
+      const productResponse = await fetch("/api/product", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -174,7 +172,7 @@ export default function Inventory() {
         productForm.initialQuantity &&
         parseFloat(productForm.initialQuantity) > 0
       ) {
-        await fetch("/api/backend/inventory/add", {
+        await fetch("/api/inventory/add", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -214,7 +212,7 @@ export default function Inventory() {
     }
 
     try {
-      const response = await fetch("/api/backend/inventory/add", {
+      const response = await fetch("/api/inventory/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -241,7 +239,7 @@ export default function Inventory() {
 
   const handleRemoveStock = async () => {
     try {
-      const response = await fetch("/api/backend/inventory/remove", {
+      const response = await fetch("/api/inventory/remove", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -272,7 +270,7 @@ export default function Inventory() {
 
   const handleAdjustStock = async () => {
     try {
-      const response = await fetch("/api/backend/inventory/adjust", {
+      const response = await fetch("/api/inventory/adjust", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -299,7 +297,7 @@ export default function Inventory() {
 
   const handleAddCategory = async () => {
     try {
-      const categoryResponse = await fetch("/api/backend/categories", {
+      const categoryResponse = await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -331,7 +329,7 @@ export default function Inventory() {
   const handleDeleteProduct = async (id: string) => {
     if (!id) return;
     try {
-      const deleteResponse = await fetch(`/api/backend/product/${id}`, {
+      const deleteResponse = await fetch(`/api/product/${id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });
