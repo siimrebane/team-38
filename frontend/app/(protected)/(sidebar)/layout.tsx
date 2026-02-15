@@ -1,25 +1,24 @@
 "use client";
 
 import { ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar";
 
-// Protected layout wraps pages that require auth.
-// Authentication and onboarding flow are handled by middleware.
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  // Hide sidebar completely on POS ID pages (e.g., /pos/123)
-  const isPOSIDPage = pathname?.match(/^\/pos\/[^/]+$/);
+  const searchParams = useSearchParams();
+  // Hide sidebar on POS station view (e.g., /pos?station=123)
+  const isPOSStationView = pathname === "/pos" && searchParams.has("station");
 
   return (
     <SidebarProvider>
-      {!isPOSIDPage && <AppSidebar />}
+      {!isPOSStationView && <AppSidebar />}
         <main className="w-full">
-            {!isPOSIDPage && <SidebarTrigger className="ml-4 mt-4" />}
+            {!isPOSStationView && <SidebarTrigger className="ml-4 mt-4" />}
             {children}
         </main>
     </SidebarProvider>

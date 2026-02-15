@@ -1,13 +1,25 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Store } from "lucide-react";
 import { StationManagementHeader } from "./StationManagementHeader";
 import { StationCard } from "./StationCard";
 import { CurrentUser, BarStation, User } from "./types";
+import POSStationView from "./station-view/POSStationView";
 
 export default function POSManagement() {
+  const searchParams = useSearchParams();
+  const stationId = searchParams.get("station");
+
+  if (stationId) {
+    return <POSStationView stationId={stationId} />;
+  }
+
+  return <POSStationList />;
+}
+
+function POSStationList() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [stations, setStations] = useState<BarStation[]>([]);
@@ -50,7 +62,7 @@ export default function POSManagement() {
 
         // If non-admin with single station, auto-redirect
         if (!isAdmin && data.length === 1) {
-          router.push(`/pos/${data[0].id}`);
+          router.push(`/pos?station=${data[0].id}`);
           return;
         }
 

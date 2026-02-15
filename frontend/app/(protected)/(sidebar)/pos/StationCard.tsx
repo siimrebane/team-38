@@ -74,7 +74,7 @@ export function StationCard({
 
       <div className="flex flex-col sm:flex-row gap-2">
         <Button
-          onClick={() => router.push(`/pos/${station.id}`)}
+          onClick={() => router.push(`/pos?station=${station.id}`)}
           className="flex-1 w-full sm:w-auto bg-green-600 hover:bg-green-700 min-w-0"
         >
           <span className="truncate">Open Station</span>
