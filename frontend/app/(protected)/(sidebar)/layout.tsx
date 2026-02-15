@@ -12,7 +12,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   // Hide sidebar on POS station view (e.g., /pos?station=123)
-  const isPOSStationView = pathname === "/pos" && searchParams.has("station");
+  const isPOSStationView = (pathname === "/pos" || pathname === "/pos/") && searchParams.has("station");
 
   return (
     <SidebarProvider>
