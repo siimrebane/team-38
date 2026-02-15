@@ -148,7 +148,7 @@ export default function Inventory() {
 
   const handleCreateProduct = async () => {
     try {
-      const productResponse = await fetch("/api/product", {
+      const productResponse = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -329,7 +329,7 @@ export default function Inventory() {
   const handleDeleteProduct = async (id: string) => {
     if (!id) return;
     try {
-      const deleteResponse = await fetch(`/api/product/${id}`, {
+      const deleteResponse = await fetch(`/api/products/${id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });
