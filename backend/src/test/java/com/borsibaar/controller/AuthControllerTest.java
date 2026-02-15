@@ -52,16 +52,16 @@ class AuthControllerTest {
         OAuth2AuthenticationToken authToken = new OAuth2AuthenticationToken(oAuth2User, oAuth2User.getAuthorities(), "google");
 
         // Act & Assert
-        mockMvc.perform(get("/auth/login/success").principal(authToken))
+        mockMvc.perform(get("/api/auth/login/success").principal(authToken))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("http://localhost:3000/onboarding"))
+                .andExpect(redirectedUrl("/onboarding/"))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, org.hamcrest.Matchers.containsString("jwt=")))
                 .andExpect(cookie().exists("jwt"));
     }
 
     @Test
     void logout_ClearsCookie_AndReturnsOk() throws Exception {
-        mockMvc.perform(post("/auth/logout"))
+        mockMvc.perform(post("/api/auth/logout"))
                 .andExpect(status().isOk())
                 .andExpect(cookie().maxAge("jwt", 0));
     }
