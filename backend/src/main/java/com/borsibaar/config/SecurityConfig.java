@@ -14,7 +14,9 @@ import org.springframework.security.oauth2.client.web.DefaultOAuth2Authorization
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpStatus;
 
 @Configuration
 @EnableWebSecurity
@@ -71,6 +73,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/inventory/**").permitAll()
                         // All other API requests require authentication
                         .anyRequest().authenticated())
+                // Return 401 for unauthenticated API requests instead of redirecting to OAuth
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .oauth2Login(oauth2 -> oauth2
                         .loginProcessingUrl("/api/login/oauth2/code/*")
                         .defaultSuccessUrl("/api/auth/login/success", true)
