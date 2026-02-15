@@ -32,7 +32,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
             CorsConfigurationSource corsConfigurationSource) throws Exception {
         DefaultOAuth2AuthorizationRequestResolver defaultResolver = new DefaultOAuth2AuthorizationRequestResolver(
-                clientRegistrationRepository, "/oauth2/authorization");
+                clientRegistrationRepository, "/api/oauth2/authorization");
 
         OAuth2AuthorizationRequestResolver customResolver = new OAuth2AuthorizationRequestResolver() {
             @Override
@@ -68,7 +68,7 @@ public class SecurityConfig {
                         // Allow OPTIONS for CORS preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Allow OAuth2 endpoints and public routes
-                        .requestMatchers("/", "/error", "/oauth2/**", "/login/oauth2/code/**", "/auth/login/success")
+                        .requestMatchers("/", "/error", "/api/oauth2/**", "/api/login/oauth2/code/**", "/api/auth/login/success")
                         .permitAll()
                         // Public API endpoints
                         .requestMatchers(HttpMethod.GET, "/api/organizations/**").permitAll()
@@ -81,8 +81,11 @@ public class SecurityConfig {
                         // All other API requests require authentication
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/auth/login/success", true)
-                        .authorizationEndpoint(auth -> auth.authorizationRequestResolver(customResolver)))
+                        .loginProcessingUrl("/api/login/oauth2/code/*")
+                        .defaultSuccessUrl("/api/auth/login/success", true)
+                        .authorizationEndpoint(auth -> auth
+                                .baseUri("/api/oauth2/authorization")
+                                .authorizationRequestResolver(customResolver)))
                 .build();
     }
 
