@@ -1,11 +1,18 @@
-import { ReactNode } from "react";
+"use client";
 
-// Protected layout wraps pages that require auth.
-// Authentication and onboarding flow are handled by middleware.
+import { ReactNode } from "react";
+import { useAuth } from "@/hooks/useAuth";
+
 export default function ProtectedLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  const auth = useAuth({ required: true });
+
+  if (auth.status === "loading") {
+    return null;
+  }
+
   return <>{children}</>;
 }

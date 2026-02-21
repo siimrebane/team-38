@@ -67,8 +67,8 @@ function SidebarFooterContent() {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/logout", { method: "POST" });
-      window.location.href = "/login";
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+      window.location.href = "/login/";
     } catch (error) {
       console.error("Logout failed:", error);
     }

@@ -5,7 +5,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -14,11 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
     private final AuthService authService;
-    @Value("${app.frontend.url}")
-    private String frontendUrl;
 
     public AuthController(AuthService authService) {
         this.authService = authService;
@@ -35,8 +32,8 @@ public class AuthController {
         cookie.setMaxAge(24 * 60 * 60); // 1 day
         response.addCookie(cookie);
 
-        String redirect = result.needsOnboarding() ? "/onboarding" : "/dashboard";
-        response.sendRedirect(frontendUrl + redirect);
+        String redirect = result.needsOnboarding() ? "/onboarding/" : "/dashboard/";
+        response.sendRedirect(redirect);
     }
 
     @PostMapping("/logout")

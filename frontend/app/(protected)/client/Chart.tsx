@@ -88,7 +88,7 @@ export default function PriceHistoryGraphFancy({
     try {
       setError(null);
       const res = await fetch(
-        `/api/backend/inventory/product/${productInv.productId}/history`,
+        `/api/inventory/product/${productInv.productId}/history`,
         {
           cache: "no-store",
           credentials: "include",

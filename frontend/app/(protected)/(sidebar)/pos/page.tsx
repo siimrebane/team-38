@@ -1,15 +1,25 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Store } from "lucide-react";
 import { StationManagementHeader } from "./StationManagementHeader";
 import { StationCard } from "./StationCard";
 import { CurrentUser, BarStation, User } from "./types";
-
-export const dynamic = "force-dynamic";
+import POSStationView from "./station-view/POSStationView";
 
 export default function POSManagement() {
+  const searchParams = useSearchParams();
+  const stationId = searchParams.get("station");
+
+  if (stationId) {
+    return <POSStationView stationId={stationId} />;
+  }
+
+  return <POSStationList />;
+}
+
+function POSStationList() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [stations, setStations] = useState<BarStation[]>([]);
@@ -22,7 +32,7 @@ export default function POSManagement() {
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await fetch("/api/backend/account");
+      const response = await fetch("/api/account");
       if (response.ok) {
         const data = await response.json();
         setCurrentUser(data);
@@ -38,8 +48,8 @@ export default function POSManagement() {
     async (isAdmin: boolean) => {
       try {
         const url = isAdmin
-          ? "/api/backend/bar-stations"
-          : "/api/backend/bar-stations/user";
+          ? "/api/bar-stations"
+          : "/api/bar-stations/user";
 
         const response = await fetch(url, { cache: "no-store" });
 
@@ -52,7 +62,7 @@ export default function POSManagement() {
 
         // If non-admin with single station, auto-redirect
         if (!isAdmin && data.length === 1) {
-          router.push(`/pos/${data[0].id}`);
+          router.push(`/pos?station=${data[0].id}`);
           return;
         }
 
@@ -68,7 +78,7 @@ export default function POSManagement() {
 
   const fetchAllUsers = useCallback(async () => {
     try {
-      const response = await fetch("/api/backend/users", { cache: "no-store" });
+      const response = await fetch("/api/users", { cache: "no-store" });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || "Failed to fetch users");
@@ -114,7 +124,7 @@ export default function POSManagement() {
       userIds: data.userIds,
     };
 
-    const response = await fetch("/api/backend/bar-stations", {
+    const response = await fetch("/api/bar-stations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -143,7 +153,7 @@ export default function POSManagement() {
       userIds: data.userIds,
     };
 
-    const response = await fetch(`/api/backend/bar-stations/${stationId}`, {
+    const response = await fetch(`/api/bar-stations/${stationId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -163,7 +173,7 @@ export default function POSManagement() {
     }
 
     try {
-      const response = await fetch(`/api/backend/bar-stations/${stationId}`, {
+      const response = await fetch(`/api/bar-stations/${stationId}`, {
         method: "DELETE",
       });
 
