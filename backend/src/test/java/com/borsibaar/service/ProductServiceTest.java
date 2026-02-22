@@ -55,6 +55,7 @@ class ProductServiceTest {
         when(inventoryTransactionRepository.save(any(InventoryTransaction.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ProductResponseDto dto = productService.create(request, 1L);
+
         assertEquals("Beer", dto.name());
         verify(inventoryRepository).save(any(Inventory.class));
         verify(inventoryTransactionRepository).save(any(InventoryTransaction.class));
