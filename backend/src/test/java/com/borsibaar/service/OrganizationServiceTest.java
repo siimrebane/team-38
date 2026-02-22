@@ -42,6 +42,7 @@ class OrganizationServiceTest {
         when(organizationMapper.toResponse(saved)).thenReturn(new OrganizationResponseDto(3L, "Org",  saved.getCreatedAt(), saved.getUpdatedAt(), BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.5)));
 
         OrganizationResponseDto dto = organizationService.create(request);
+
         assertEquals(3L, dto.id());
         verify(organizationRepository).save(entity);
     }
