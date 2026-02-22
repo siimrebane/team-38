@@ -50,4 +50,4 @@ jobs:
           rsync -az --delete \
             -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes" \
             frontend/out/ \
-            "${{ vars.SSH_USER }}@${{ vars.SERVER_IP }}:/var/www/html/"
+            "${{ vars.SSH_USER }}@${{ vars.SERVER_IP }}:/opt/anastasia2/frontend/"
