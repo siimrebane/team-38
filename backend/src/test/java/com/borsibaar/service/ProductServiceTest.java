@@ -101,7 +101,9 @@ class ProductServiceTest {
         Product entity = new Product(); entity.setName("Beer");
         when(productMapper.toEntity(request)).thenReturn(entity);
         when(productRepository.existsByOrganizationIdAndNameIgnoreCase(1L, "Beer")).thenReturn(true);
+
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> productService.create(request, 1L));
+
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
     }
 
