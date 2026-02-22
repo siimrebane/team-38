@@ -167,6 +167,7 @@ class InventoryServiceTest {
         when(userRepository.findAllById(anyList())).thenReturn(List.of(user));
 
         List<InventoryTransactionResponseDto> result = inventoryService.getTransactionHistory(10L, 1L);
+
         assertEquals(1, result.size());
         assertEquals(uid.toString(), result.get(0).createdBy());
         assertEquals("Alice", result.get(0).createdByName());
