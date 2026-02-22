@@ -87,7 +87,9 @@ class ProductServiceTest {
         when(categoryRepository.findById(7L)).thenReturn(Optional.of(cat));
         Product entity = new Product(); entity.setName("Beer");
         when(productMapper.toEntity(request)).thenReturn(entity);
+
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> productService.create(request, 1L));
+
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
