@@ -71,6 +71,11 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan "${{ vars.SERVER_IP }}" >> ~/.ssh/known_hosts
 
+      - name: Copy docker-compose to server
+        if: github.event_name == 'push'
+        run: |
+          scp -i ~/.ssh/id_rsa docker-compose.prod.yaml "${{ vars.SSH_USER }}@${{ vars.SERVER_IP }}:${{ vars.DEPLOY_PATH }}/docker-compose.prod.yaml"
+
       - name: Deploy backend on server
         if: github.event_name == 'push'
         run: |
@@ -81,5 +86,5 @@ jobs:
           docker compose -f docker-compose.prod.yaml up -d --no-deps backend
           docker image prune -f
           echo "Backend deployed!"
-          docker compose -f docker-compose.server.yaml ps
+          docker compose -f docker-compose.prod.yaml ps
           EOF
