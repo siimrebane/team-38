@@ -69,14 +69,14 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan "${{ secrets.SERVER_IP }}" >> ~/.ssh/known_hosts
+          ssh-keyscan "${{ vars.SERVER_IP }}" >> ~/.ssh/known_hosts
 
       - name: Deploy backend on server
         if: github.event_name == 'push'
         run: |
-          ssh -i ~/.ssh/id_rsa "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" << 'EOF'
+          ssh -i ~/.ssh/id_rsa "${{ vars.SSH_USER }}@${{ vars.SERVER_IP }}" << 'EOF'
           set -e
-          cd ${{ secrets.DEPLOY_PATH }}
+          cd ${{ vars.DEPLOY_PATH }}
           docker compose -f docker-compose.prod.yaml pull backend
           docker compose -f docker-compose.prod.yaml up -d --no-deps backend
           docker image prune -f

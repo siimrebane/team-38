@@ -42,7 +42,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan "${{ secrets.SERVER_IP }}" >> ~/.ssh/known_hosts
+          ssh-keyscan "${{ vars.SERVER_IP }}" >> ~/.ssh/known_hosts
 
       - name: Deploy frontend to /var/www/html
         if: github.event_name == 'push'
@@ -50,4 +50,4 @@ jobs:
           rsync -az --delete \
             -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes" \
             frontend/out/ \
-            "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/var/www/html/"
+            "${{ vars.SSH_USER }}@${{ vars.SERVER_IP }}:/var/www/html/"
