@@ -169,8 +169,8 @@ class InventoryServiceTest {
         List<InventoryTransactionResponseDto> result = inventoryService.getTransactionHistory(10L, 1L);
 
         assertEquals(1, result.size());
-        assertEquals(uid.toString(), result.get(0).createdBy());
-        assertEquals("Alice", result.get(0).createdByName());
+        assertEquals(uid.toString(), result.getFirst().createdBy());
+        assertEquals("Alice", result.getFirst().createdByName());
     }
 
     @Test
