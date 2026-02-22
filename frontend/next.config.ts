@@ -1,11 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
     typescript: {
         ignoreBuildErrors: true,
     },
-    output: 'standalone',
+    output: 'export',
+    images: {
+        unoptimized: true,
+    },
+    trailingSlash: true,
+    // Dev-only: proxy /api requests to the backend running on localhost:8080
+    async rewrites() {
+        return [
+            { source: '/api/:path*', destination: 'http://localhost:8080/api/:path*' },
+        ];
+    },
 };
 
 export default nextConfig;

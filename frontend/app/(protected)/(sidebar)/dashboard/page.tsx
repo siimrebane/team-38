@@ -3,8 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 
-export const dynamic = "force-dynamic"; // still opt-out of caching
-
 interface CurrentUser {
   id: number | string;
   email: string;
@@ -52,7 +50,7 @@ export default function Dashboard() {
     setError(null);
     try {
       // Fetch current user via frontend proxy (keeps cookies)
-      const userRes = await fetch("/api/backend/account", {
+      const userRes = await fetch("/api/account", {
         cache: "no-store",
       });
       if (userRes.status === 401) {
@@ -69,7 +67,7 @@ export default function Dashboard() {
         // Fetch organization via Next.js proxy to avoid CORS and forward cookies
         try {
           const orgRes = await fetch(
-            `/api/backend/organizations/${userJson.organizationId}`,
+            `/api/organizations/${userJson.organizationId}`,
             { cache: "no-store" }
           );
           if (orgRes.ok) {
@@ -90,7 +88,7 @@ export default function Dashboard() {
         }
 
         try {
-          const statsRes = await fetch(`/api/backend/inventory/sales-stats`, {
+          const statsRes = await fetch(`/api/inventory/sales-stats`, {
             cache: "no-store",
           });
           if (statsRes.ok) {
@@ -103,7 +101,7 @@ export default function Dashboard() {
 
         try {
           const stationStatsRes = await fetch(
-            `/api/backend/inventory/station-sales-stats`,
+            `/api/inventory/station-sales-stats`,
             { cache: "no-store" }
           );
           if (stationStatsRes.ok) {
@@ -146,7 +144,7 @@ export default function Dashboard() {
     setSaveSuccess(null);
     try {
       const res = await fetch(
-        `/api/backend/organizations/${me.organizationId}`,
+        `/api/organizations/${me.organizationId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
